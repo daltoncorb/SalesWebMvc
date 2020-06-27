@@ -11,6 +11,7 @@ namespace SalesWebMvc.Controllers
     public class SellersController : Controller
     {
         private readonly SellersService _sellersService;
+        
 
         public SellersController(SellersService sellersService)
         {
