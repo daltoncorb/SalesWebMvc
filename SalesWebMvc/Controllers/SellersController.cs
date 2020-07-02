@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -14,7 +15,7 @@ namespace SalesWebMvc.Controllers
     {
         private readonly SellersService _sellersService;
         private readonly DepartmentService _departmentService;
-        
+
 
         public SellersController(SellersService sellersService, DepartmentService departmentService)
         {
@@ -25,7 +26,7 @@ namespace SalesWebMvc.Controllers
         public IActionResult Index()
         {
             List<Seller> list = _sellersService.FindAll();
-            
+
             return View(list);
         }
 
@@ -38,7 +39,7 @@ namespace SalesWebMvc.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create( Seller seller)
+        public IActionResult Create(Seller seller)
         {
             _sellersService.AddSeller(seller);
             return RedirectToAction(nameof(Index));
@@ -47,11 +48,11 @@ namespace SalesWebMvc.Controllers
         public IActionResult Delete(int? id)
         {
             if (id == null)
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "Não foi passado o código para exclusão"});
 
             var obj = _sellersService.FindAllById(id.Value);
             if (obj == null)
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "O código passado não foi localizado !"});
 
             return View(obj);
 
@@ -68,17 +69,19 @@ namespace SalesWebMvc.Controllers
         public IActionResult Detail(int id)
         {
             var obj = _sellersService.FindAllById(id);
+            if (obj == null)
+                return RedirectToAction(nameof(Error), new { message = "Não foram localizados os dados de acordo com o código do Vendedor" });
             return View(obj);
         }
 
         public IActionResult Edit(int? id)
         {
             if (id == null)
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "Não foi passado o código para alteração" }); 
 
             var obj = _sellersService.FindAllById(id.Value);
             if (obj == null)
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "O código para alteração não existe" });
 
             List<Department> department = _departmentService.FindAll();
             SellerFormViewModel sellerFormViewModel = new SellerFormViewModel() { Seller = obj, Departments = department };
@@ -89,7 +92,7 @@ namespace SalesWebMvc.Controllers
         public IActionResult Edit(int id, Seller seller)
         {
             if (id != seller.Id)
-                return BadRequest();
+                return RedirectToAction(nameof(Error), new { message = "Os código estão diferentes!"});
             try
             {
                 _sellersService.UpdateSeller(seller);
@@ -103,7 +106,16 @@ namespace SalesWebMvc.Controllers
             {
                 return BadRequest();
             }
-            
+
+        }
+
+        public IActionResult Error(string message)
+        {
+            var errorViewModel = new ErrorViewModel() {
+                message = message,
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier };
+
+            return View(errorViewModel);
         }
     }
 }
