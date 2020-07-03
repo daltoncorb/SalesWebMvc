@@ -18,38 +18,41 @@ namespace SalesWebMvc.Services
             _context = context;
         }
 
-        public List<Seller> FindAll()
+        public async Task<List<Seller>> FindAllAsync()
         {
-            return _context.Seller.ToList();
+            return await _context.Seller.ToListAsync();
         }
 
-        public Seller FindAllById(int id)
+        public async Task<Seller> FindAllById(int id)
         {
-            return _context.Seller.Include(d => d.Department).FirstOrDefault(s => s.Id == id);
+            return await _context.Seller.Include(d => d.Department).FirstOrDefaultAsync(s => s.Id == id);
         }
 
-        public void AddSeller(Seller seller)
+        //Troca o void por task
+        public async Task AddSellerAsync(Seller seller)
         {            
             _context.Add(seller);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void RemoveSeller(int id)
+        public async Task RemoveSeller(int id)
         {
-            var obj = _context.Seller.Find(id);
+            var obj = await _context.Seller.FindAsync(id);
             _context.Seller.Remove(obj);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void UpdateSeller(Seller seller)
+        public async Task UpdateSeller(Seller seller)
         {
-            if (!_context.Seller.Any(s => s.Id == seller.Id))
+            bool hasAny = await _context.Seller.AnyAsync(s => s.Id == seller.Id);
+
+            if (!hasAny)
                 throw new NotFoundExceptions("O código desse vendedor não foi localizado !");
 
             try
             {
                 _context.Update(seller);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
             catch (DbConcurrencyException e)
             {

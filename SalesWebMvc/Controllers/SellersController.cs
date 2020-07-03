@@ -23,34 +23,40 @@ namespace SalesWebMvc.Controllers
             _departmentService = departmentService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            List<Seller> list = _sellersService.FindAll();
+            List<Seller> list = await _sellersService.FindAllAsync();
 
             return View(list);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            var departments = _departmentService.FindAll();
+            var departments = await _departmentService.FindAllAsync();
             var viewModel = new SellerFormViewModel { Departments = departments };
             return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Seller seller)
+        public async Task<IActionResult> Create(Seller seller)
         {
-            _sellersService.AddSeller(seller);
+            if (!ModelState.IsValid)
+            {
+                var dp = await _departmentService.FindAllAsync();
+                var vm = new SellerFormViewModel() { Seller = seller, Departments = dp };
+                return View(vm);
+            }
+            await _sellersService.AddSellerAsync(seller);
             return RedirectToAction(nameof(Index));
         }
 
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
                 return RedirectToAction(nameof(Error), new { message = "Não foi passado o código para exclusão"});
 
-            var obj = _sellersService.FindAllById(id.Value);
+            var obj = await _sellersService.FindAllById(id.Value);
             if (obj == null)
                 return RedirectToAction(nameof(Error), new { message = "O código passado não foi localizado !"});
 
@@ -60,42 +66,42 @@ namespace SalesWebMvc.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            _sellersService.RemoveSeller(id);
+            await _sellersService.RemoveSeller(id);
             return RedirectToAction(nameof(Index));
         }
 
-        public IActionResult Detail(int id)
+        public async Task<IActionResult> Detail(int id)
         {
-            var obj = _sellersService.FindAllById(id);
+            var obj = await _sellersService.FindAllById(id);
             if (obj == null)
                 return RedirectToAction(nameof(Error), new { message = "Não foram localizados os dados de acordo com o código do Vendedor" });
             return View(obj);
         }
 
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
                 return RedirectToAction(nameof(Error), new { message = "Não foi passado o código para alteração" }); 
 
-            var obj = _sellersService.FindAllById(id.Value);
+            var obj = await _sellersService.FindAllById(id.Value);
             if (obj == null)
                 return RedirectToAction(nameof(Error), new { message = "O código para alteração não existe" });
 
-            List<Department> department = _departmentService.FindAll();
+            List<Department> department = await _departmentService.FindAllAsync();
             SellerFormViewModel sellerFormViewModel = new SellerFormViewModel() { Seller = obj, Departments = department };
             return View(sellerFormViewModel);
         }
 
         [HttpPost]
-        public IActionResult Edit(int id, Seller seller)
+        public async Task<IActionResult> Edit(int id, Seller seller)
         {
             if (id != seller.Id)
                 return RedirectToAction(nameof(Error), new { message = "Os código estão diferentes!"});
             try
             {
-                _sellersService.UpdateSeller(seller);
+                await _sellersService.UpdateSeller(seller);
                 return RedirectToAction(nameof(Index));
             }
             catch (NotFoundExceptions)
