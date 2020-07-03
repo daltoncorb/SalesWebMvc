@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services;
@@ -68,8 +69,16 @@ namespace SalesWebMvc.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            await _sellersService.RemoveSeller(id);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await _sellersService.RemoveSeller(id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (IntegrityException e)
+            {
+                return RedirectToAction(nameof(Error), new { message = "O Vendedor só pode ser excluído depois de excluir suas vendas! " + e.Message});
+            }
+            
         }
 
         public async Task<IActionResult> Detail(int id)
